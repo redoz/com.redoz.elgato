@@ -1,3 +1,89 @@
 {
-  "_comment": "This file is generated. Please edit .homeycompose/app.json instead."
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.redoz.elgato",
+  "version": "1.0.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Elgato"
+  },
+  "description": {
+    "en": "Adds support for Elgato devices."
+  },
+  "category": [
+    "lights"
+  ],
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Patrik Husfloen",
+    "email": "redoz@redoz.com"
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Elgato Key Light"
+      },
+      "class": "light",
+      "capabilities": [
+        "onoff",
+        "light_temperature",
+        "dim"
+      ],
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "discovery": "key_light",
+      "images": {
+        "small": "/drivers/elgato-key-light/assets/images/small.png",
+        "large": "/drivers/elgato-key-light/assets/images/large.png",
+        "xlarge": "/drivers/elgato-key-light/assets/images/xlarge.png"
+      },
+      "id": "elgato-key-light"
+    }
+  ],
+  "discovery": {
+    "key_light": {
+      "type": "mdns-sd",
+      "mdns-sd": {
+        "name": "_elg",
+        "protocol": "tcp"
+      },
+      "id": "{{txt.id}}",
+      "conditions": [
+        [
+          {
+            "field": "txt.md",
+            "match": {
+              "type": "string",
+              "value": "Elgato Key Light 20GAK9901"
+            }
+          }
+        ]
+      ]
+    }
+  }
 }
