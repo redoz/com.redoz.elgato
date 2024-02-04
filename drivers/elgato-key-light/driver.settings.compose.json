@@ -1,0 +1,90 @@
+[
+  {
+    "type": "group",
+    "label": {
+      "en": "WiFi connection"
+    },
+    "children": [
+      {
+        "id": "ssid",
+        "type": "label",
+        "label": {
+          "en": "Name"
+        },
+        "value": ""
+      },
+      {
+        "id": "band",
+        "type": "label",
+        "label": {
+          "en": "Band"
+        },
+        "value": ""
+      },
+      {
+        "id": "rssi",
+        "type": "label",
+        "label": {
+          "en": "Signal strength"
+        },
+        "value": ""
+      }
+    ]
+  },
+  {
+    "type": "group",
+    "label": {
+      "en": "Device information"
+    },
+    "children": [
+      {
+        "id": "product_name",
+        "type": "label",
+        "label": {
+          "en": "Product name"
+        },
+        "value": ""
+      },
+      {
+        "id": "serial_number",
+        "type": "label",
+        "label": {
+          "en": "Serial number"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_board_type",
+        "type": "label",
+        "label": {
+          "en": "Hardware board type"
+        },
+        "value": ""
+      },
+      {
+        "id": "hardware_revision",
+        "type": "label",
+        "label": {
+          "en": "Hardware revision"
+        },
+        "value": ""
+      },
+      {
+        "id": "mac_address",
+        "type": "label",
+        "label": {
+          "en": "MAC address"
+        },
+        "value": ""
+      },
+      {
+        "id": "firmware_version",
+        "type": "label",
+        "label": {
+          "en": "Firmware version"
+        },
+        "value": ""
+      }
+    ]
+  }
+]

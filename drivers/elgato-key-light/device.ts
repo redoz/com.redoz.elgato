@@ -2,6 +2,19 @@ import Homey from 'homey';
 import { ElgatoKeyLightClient } from './api';
 import { DiscoveryResultMDNSSD } from 'homey/lib/DiscoveryStrategy';
 
+interface DeviceSettings {
+  ssid: string
+  band: string
+  rssi: string
+  product_name: string
+  hardware_board_type: string
+  hardware_revision: string
+  mac_address: string
+  firmware_build_number: string
+  serial_number: string
+  firmware_version: string
+}
+
 class ElgatoKeyLightDevice extends Homey.Device {
   private _client?: ElgatoKeyLightClient;
 
@@ -9,10 +22,15 @@ class ElgatoKeyLightDevice extends Homey.Device {
    * onInit is called when the device is initialized.
    */
   async onInit() {
-    this.log('MyDevice has been initialized');
+    this.log('ElgatoKeyLightDevice has been initialized');
 
     this.registerCapabilityListener("onoff", async (value: boolean) => {
       await this._client?.setState({ on: value });
+    });
+
+    
+    this.registerCapabilityListener("light_temperature", async (value: number) => {
+      this.log("light_temperature", value)
     });
   }
 
@@ -32,11 +50,25 @@ class ElgatoKeyLightDevice extends Homey.Device {
     // This method will be executed once when the device has been found (onDiscoveryResult returned true)
     this.log("onDiscoveryAvailable", discoveryResult)
     this._client = new ElgatoKeyLightClient(`http://${discoveryResult.address}:${discoveryResult.port}`);
+    var deviceInfo  = await this._client.getDeviceInfo();
+
+    let settings : Partial<DeviceSettings> = {
+      ssid: deviceInfo.wifiInfo.ssid,
+      band: `${Math.round(deviceInfo.wifiInfo.frequencyMHz / 100) / 10} GHz`,
+      rssi: deviceInfo.wifiInfo.rssi.toString(10),
+      product_name: deviceInfo.productName,
+      hardware_board_type: deviceInfo.hardwareBoardType.toString(10),
+      hardware_revision: deviceInfo.hardwareRevision.toString(10),
+      mac_address: deviceInfo.macAddress,
+      serial_number: deviceInfo.serialNumber,
+      firmware_version: `${deviceInfo.firmwareVersion} (${deviceInfo.firmwareBuildNumber.toString(10)})`
+    }
+    await this.setSettings(settings);
+
     var currentState = await this._client.getCurrentState();
     this.log("currentState", currentState);
+
     this.setCapabilityValue("onoff", currentState.on).catch(this.error)
-    
-    // await this.api.connect(); // When this throws, the device will become unavailable.
   }
 
   onDiscoveryAddressChanged(discoveryResult: DiscoveryResultMDNSSD) {
@@ -78,7 +110,9 @@ class ElgatoKeyLightDevice extends Homey.Device {
    * @param {string} name The new name
    */
   async onRenamed(name: string) {
-    this.log('MyDevice was renamed');
+    let trimmedName = name.trim();
+    await this._client?.setName(trimmedName)
+    this.log(`ElgatoKeyLightDevice was renamed to ${trimmedName}`);
   }
 
   /**
