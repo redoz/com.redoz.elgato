@@ -41,6 +41,24 @@ export class ElgatoKeyLightClient {
         this._httpClient = new RestClient('com.redoz.elgato/1', this._baseUri);
     }
 
+    public static readonly maxKelvinTemperature : number = 7000;
+    public static readonly minKelvinTemperature : number = 2900;
+
+    public static convertPercentageToKelvin(value: number) : number {
+        const range = ElgatoKeyLightClient.maxKelvinTemperature - ElgatoKeyLightClient.minKelvinTemperature;
+        var kelvin = range * value + ElgatoKeyLightClient.minKelvinTemperature;
+        // clamp the return value
+        return Math.min(ElgatoKeyLightClient.maxKelvinTemperature, Math.max(ElgatoKeyLightClient.minKelvinTemperature, kelvin))
+    }   
+
+    public static convertKelvinToPercentage(value: number) : number {
+        const range = ElgatoKeyLightClient.maxKelvinTemperature - ElgatoKeyLightClient.minKelvinTemperature;
+        const relative = value - ElgatoKeyLightClient.minKelvinTemperature;
+        const percentage = value / range;
+        // clamp the return value
+        return Math.min(0, Math.max(1, percentage))
+    }
+
     public async setName(name: string) : Promise<ElgatoDeviceInfo> {
         let request : Pick<ElgatoDeviceInfoResponse, 'displayName'> = { displayName: name };
         console.log("request", request);
@@ -49,7 +67,7 @@ export class ElgatoKeyLightClient {
         if (response.statusCode !== 200) {
             throw `Unexpected status code ${response.statusCode} returned from '${this._baseUri}/elgato/accessory-info'`
         }
-        return this.mapToDeviceInfo(response.result!)        
+        return ElgatoKeyLightClient.mapToDeviceInfo(response.result!)        
     }
 
     public async getDeviceInfo(): Promise<ElgatoDeviceInfo> {
@@ -58,7 +76,7 @@ export class ElgatoKeyLightClient {
         if (response.statusCode !== 200) {
             throw `Unexpected status code ${response.statusCode} returned from '${this._baseUri}/elgato/lights'`
         }
-        return this.mapToDeviceInfo(response.result!)
+        return ElgatoKeyLightClient.mapToDeviceInfo(response.result!)
 
     }
 
@@ -68,7 +86,7 @@ export class ElgatoKeyLightClient {
         if (response.statusCode !== 200) {
             throw `Unexpected status code ${response.statusCode} returned from '${this._baseUri}/elgato/lights'`
         }
-        return this.mapToState(response.result!)
+        return ElgatoKeyLightClient.mapToState(response.result!)
     }
 
     public async setState(state: Partial<ElgatoKeyLightState>): Promise<ElgatoKeyLightState> {
@@ -80,11 +98,12 @@ export class ElgatoKeyLightClient {
         }
 
         if (state.temperature !== undefined) {
-            payload.temperature = this.mapToLightTemperature(state.temperature);
+            // yeah this is a bit clunky, maybe I'll clean this later, I wasn't expecting Homey to send 0-1 values
+            payload.temperature = ElgatoKeyLightClient.mapToDeviceTemperature(state.temperature);
         }
 
         if (state.brightness !== undefined) {
-            payload.brightness = this.mapToLightBrightness(state.brightness);
+            payload.brightness = ElgatoKeyLightClient.mapToDeviceBrightness(state.brightness);
         }
 
         var request = {
@@ -100,21 +119,21 @@ export class ElgatoKeyLightClient {
         if (response.statusCode !== 200) {
             throw `Unexpected status code ${response.statusCode} returned from '${this._baseUri}/elgato/lights'`
         }
-        return this.mapToState(response.result!)
+        return ElgatoKeyLightClient.mapToState(response.result!)
     }
 
-    mapToState(message: ElgatoKeyLightMessage): ElgatoKeyLightState {
+    static mapToState(message: ElgatoKeyLightMessage): ElgatoKeyLightState {
         console.assert(message.lights.length === 1, `Expected exactly 1 item for 'message.lights[]'`);
 
         const light = message.lights[0];
         return {
             on: light.on === 1,
-            brightness: light.brightness,
-            temperature: light.temperature
+            brightness: ElgatoKeyLightClient.mapFromDeviceBrightness(light.brightness),
+            temperature: ElgatoKeyLightClient.mapFromDeviceTemperature(light.temperature)
         }
     }
 
-    mapToDeviceInfo(message: ElgatoDeviceInfoResponse): ElgatoDeviceInfo {
+    static mapToDeviceInfo(message: ElgatoDeviceInfoResponse): ElgatoDeviceInfo {
         return {
             productName: message.productName,
             hardwareBoardType: message.hardwareBoardType,
@@ -133,29 +152,36 @@ export class ElgatoKeyLightClient {
         }
     }
 
-    mapToLightTemperature(kelvin: number): number {
-        let rawValue = kelvin * 0.05;
-        let clampedValue = Math.min(343, Math.max(143, rawValue));
-        return clampedValue;
+    static mapToDeviceTemperature(percentage: number): number {
+        const range = 343 - 143;
+        var absolute = 143 + percentage * range;
+        // clamp value
+        return Math.round(Math.min(343, Math.max(143, absolute)));
     }
 
-    mapToKelvin(lightTemperature: number): number {
-        var rawValue = lightTemperature / 0.05;
-        // noramzlie to incremenets of 50?
-        return rawValue;
+    static mapFromDeviceTemperature(temperature: number): number {
+        var relative = temperature - 143
+        var percentage = relative / (343-143);
+        // clamp value
+        return Math.min(0, Math.max(1, percentage));
     }
 
-    mapToLightBrightness(brightness: number) : number {
-        var rawValue = brightness * 100;
-        let clampedValue = Math.min(100, Math.max(0, rawValue));
-        return clampedValue;
+    static mapFromDeviceBrightness(brightness: number) : number {
+        var relative = brightness - 3
+        var percentage = relative / (100 - 3);
+        return Math.min(0, Math.max(1, percentage));
+    }
+
+    static mapToDeviceBrightness(percentage: number) : number {
+        const range = 100 - 3;
+        var absolute = 3 + percentage * range;
+        let clampedValue = Math.min(100, Math.max(3, absolute));
+        return Math.round(clampedValue);
     }
 }
 
-
 export interface ElgatoKeyLightState {
     on: boolean;
-    
     brightness: number;
     temperature: number
 }

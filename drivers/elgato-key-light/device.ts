@@ -13,6 +13,7 @@ interface DeviceSettings {
   firmware_build_number: string
   serial_number: string
   firmware_version: string
+  ip_address: string
 }
 
 class ElgatoKeyLightDevice extends Homey.Device {
@@ -25,12 +26,19 @@ class ElgatoKeyLightDevice extends Homey.Device {
     this.log('ElgatoKeyLightDevice has been initialized');
 
     this.registerCapabilityListener("onoff", async (value: boolean) => {
+      this.log("onoff", value);
       await this._client?.setState({ on: value });
     });
 
     
     this.registerCapabilityListener("light_temperature", async (value: number) => {
-      this.log("light_temperature", value)
+      this.log("light_temperature", value);
+      await this._client?.setState({temperature: value});
+    });
+
+    this.registerCapabilityListener("dim", async (value: number) => {
+      this.log("dim", value);
+      await this._client?.setState({brightness: value});
     });
   }
 
@@ -61,7 +69,8 @@ class ElgatoKeyLightDevice extends Homey.Device {
       hardware_revision: deviceInfo.hardwareRevision.toString(10),
       mac_address: deviceInfo.macAddress,
       serial_number: deviceInfo.serialNumber,
-      firmware_version: `${deviceInfo.firmwareVersion} (${deviceInfo.firmwareBuildNumber.toString(10)})`
+      firmware_version: `${deviceInfo.firmwareVersion} (${deviceInfo.firmwareBuildNumber.toString(10)})`,
+      ip_address: discoveryResult.address
     }
     await this.setSettings(settings);
 
@@ -71,11 +80,27 @@ class ElgatoKeyLightDevice extends Homey.Device {
     this.setCapabilityValue("onoff", currentState.on).catch(this.error)
   }
 
-  onDiscoveryAddressChanged(discoveryResult: DiscoveryResultMDNSSD) {
+  async onDiscoveryAddressChanged(discoveryResult: DiscoveryResultMDNSSD) {
     this.log("onDiscoveryAddressChanged", discoveryResult)
     // Update your connection details here, reconnect when the device is offline
     
     this._client = new ElgatoKeyLightClient(`http://${discoveryResult.address}:${discoveryResult.port}`);
+
+    var deviceInfo  = await this._client.getDeviceInfo();
+
+    let settings : Partial<DeviceSettings> = {
+      ssid: deviceInfo.wifiInfo.ssid,
+      band: `${Math.round(deviceInfo.wifiInfo.frequencyMHz / 100) / 10} GHz`,
+      rssi: deviceInfo.wifiInfo.rssi.toString(10),
+      product_name: deviceInfo.productName,
+      hardware_board_type: deviceInfo.hardwareBoardType.toString(10),
+      hardware_revision: deviceInfo.hardwareRevision.toString(10),
+      mac_address: deviceInfo.macAddress,
+      serial_number: deviceInfo.serialNumber,
+      firmware_version: `${deviceInfo.firmwareVersion} (${deviceInfo.firmwareBuildNumber.toString(10)})`,
+      ip_address: discoveryResult.address
+    }
+    await this.setSettings(settings);
     // this.api.reconnect().catch(this.error); 
   }
 

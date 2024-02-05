@@ -2,14 +2,14 @@
   {
     "type": "group",
     "label": {
-      "en": "WiFi connection"
+      "en": "Connection"
     },
     "children": [
       {
         "id": "ssid",
         "type": "label",
         "label": {
-          "en": "Name"
+          "en": "WiFi Network"
         },
         "value": ""
       },
@@ -17,7 +17,7 @@
         "id": "band",
         "type": "label",
         "label": {
-          "en": "Band"
+          "en": "WiFi Band"
         },
         "value": ""
       },
@@ -25,7 +25,23 @@
         "id": "rssi",
         "type": "label",
         "label": {
-          "en": "Signal strength"
+          "en": "Wifi Signal strength"
+        },
+        "value": ""
+      },
+      {
+        "id": "ip_address",
+        "type": "label",
+        "label": {
+          "en": "IP address"
+        },
+        "value": ""
+      },
+      {
+        "id": "mac_address",
+        "type": "label",
+        "label": {
+          "en": "MAC address"
         },
         "value": ""
       }
@@ -69,14 +85,7 @@
         },
         "value": ""
       },
-      {
-        "id": "mac_address",
-        "type": "label",
-        "label": {
-          "en": "MAC address"
-        },
-        "value": ""
-      },
+
       {
         "id": "firmware_version",
         "type": "label",
