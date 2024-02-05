@@ -69,6 +69,82 @@
         {
           "type": "group",
           "label": {
+            "en": "Application settings"
+          },
+          "children": [
+            {
+              "id": "refresh_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 3,
+              "min": 0,
+              "max": 60,
+              "units": {
+                "en": "seconds"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Power settings"
+          },
+          "children": [
+            {
+              "id": "power_on_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Power on behavior"
+              },
+              "values": [
+                {
+                  "id": "last_used_settings",
+                  "label": {
+                    "en": "Last used settings"
+                  }
+                },
+                {
+                  "id": "default_settings",
+                  "label": {
+                    "en": "Default settings"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "default_temperature",
+              "type": "number",
+              "label": {
+                "en": "Default light temperature"
+              },
+              "value": 3000,
+              "min": 2900,
+              "max": 7000,
+              "units": {
+                "en": "Kelvin"
+              }
+            },
+            {
+              "id": "default_brightness",
+              "type": "number",
+              "label": {
+                "en": "Default brightness"
+              },
+              "value": 50,
+              "min": 3,
+              "max": 100,
+              "units": {
+                "en": "%"
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
             "en": "Connection"
           },
           "children": [
