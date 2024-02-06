@@ -12,7 +12,7 @@
           "en": "Refresh interval"
         },
         "value": 3,
-        "min": 0,
+        "min": 0.5,
         "max": 60,
         "units": { "en": "seconds" }
       }
@@ -25,24 +25,26 @@
     },
     "children": [
       {
-        "id": "power_on_mode",
+        "id": "power_on_behavior",
         "type": "dropdown",
         "label": {
           "en": "Power on behavior"
         },
         "values": [
           {
-            "id": "last_used_settings",
-            "label": { "en": "Last used settings" }
+            "id": "RestoreLastUsedSettings",
+            "value": "RestoreLastUsedSettings",
+            "label": { "en": "Restore last used settings" }
           },
           {
-            "id": "default_settings",
-            "label": { "en": "Default settings" }
+            "id": "RestoreDefaults",
+            "value": "RestoreDefaults",
+            "label": { "en": "Restore default settings" }
           }
         ]
       },
       {
-        "id": "default_temperature",
+        "id": "default_power_on_temperature",
         "type": "number",
         "label": {
           "en": "Default light temperature"
@@ -53,7 +55,7 @@
         "units": { "en": "Kelvin" }
       },
       {
-        "id": "default_brightness",
+        "id": "default_power_on_brightness",
         "type": "number",
         "label": {
           "en": "Default brightness"

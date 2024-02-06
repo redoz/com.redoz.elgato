@@ -31,15 +31,24 @@ interface WifiInfoResponse {
     rssi: number
 }
 
+interface ElgatoLightSettingsMessage {
+    powerOnBehavior: number
+    powerOnBrightness: number
+    powerOnTemperature: number
+}
+
 
 export class ElgatoKeyLightClient {
     private _httpClient: RestClient;
     private _baseUri: string;
 
-    constructor(baseUri: string) {
-        this._baseUri = baseUri;
+    constructor(host: string, port: number) {
+        this.host = host;
+        this._baseUri = `http://${host}:${port}`;
         this._httpClient = new RestClient('com.redoz.elgato/1', this._baseUri);
     }
+
+    public readonly host: string;
 
     public static readonly maxKelvinTemperature : number = 7000;
     public static readonly minKelvinTemperature : number = 2900;
@@ -54,7 +63,7 @@ export class ElgatoKeyLightClient {
     public static convertKelvinToPercentage(value: number) : number {
         const range = ElgatoKeyLightClient.maxKelvinTemperature - ElgatoKeyLightClient.minKelvinTemperature;
         const relative = value - ElgatoKeyLightClient.minKelvinTemperature;
-        const percentage = value / range;
+        const percentage = relative / range;
         // clamp the return value
         return Math.min(0, Math.max(1, percentage))
     }
@@ -122,6 +131,25 @@ export class ElgatoKeyLightClient {
         return ElgatoKeyLightClient.mapToState(response.result!)
     }
 
+    public async getSettings() : Promise<ElgatoLightSettings> {
+        var response = await this._httpClient.get<ElgatoLightSettingsMessage>('elgato/lights/settings')
+        if (response.statusCode !== 200) {
+            throw `Unexpected status code ${response.statusCode} returned from '${this._baseUri}/elgato/lights/settings'`
+        }
+        console.log("getSettings", response.result);
+        let settings = ElgatoKeyLightClient.mapToSettings(response.result!)
+        console.log("mappedSettings", settings);
+        return settings;
+    }
+
+    static mapToSettings(message: ElgatoLightSettingsMessage) : ElgatoLightSettings {
+        return {
+            powerOnBehavior: ElgatoKeyLightClient.mapFromDevicePowerOnBehavior(message.powerOnBehavior),
+            powerOnBrightness: ElgatoKeyLightClient.mapFromDeviceBrightness(message.powerOnBrightness),
+            powerOnTemperature: ElgatoKeyLightClient.mapFromDeviceTemperature(message.powerOnTemperature)
+        }
+    }
+
     static mapToState(message: ElgatoKeyLightMessage): ElgatoKeyLightState {
         console.assert(message.lights.length === 1, `Expected exactly 1 item for 'message.lights[]'`);
 
@@ -152,6 +180,26 @@ export class ElgatoKeyLightClient {
         }
     }
 
+    static mapFromDevicePowerOnBehavior(value: number) : ElgatoPowerOnBehavior {
+        if (value === 1)
+            return ElgatoPowerOnBehavior.RestoreLastUsedSettings;
+        if (value === 2)
+            return ElgatoPowerOnBehavior.RestoreDefaults;
+        
+        throw `Invalid device power on behavior value ${value}, expected 1 or 2`
+    }
+
+    static mapToDevicePowerOnBehavior(value: ElgatoPowerOnBehavior) : number {
+
+        if (value === ElgatoPowerOnBehavior.RestoreLastUsedSettings)
+            return 1;
+        if (value === ElgatoPowerOnBehavior.RestoreDefaults)
+            return 2;
+        
+        throw `Invalid power on behavior value ${value}, expected ${ElgatoPowerOnBehavior.RestoreLastUsedSettings} or ${ElgatoPowerOnBehavior.RestoreLastUsedSettings}`
+    }
+
+
     static mapToDeviceTemperature(percentage: number): number {
         const range = 343 - 143;
         var absolute = 143 + percentage * range;
@@ -163,13 +211,19 @@ export class ElgatoKeyLightClient {
         var relative = temperature - 143
         var percentage = relative / (343-143);
         // clamp value
-        return Math.min(0, Math.max(1, percentage));
+        var result = Math.min(1, Math.max(0, percentage));
+        result = Math.round(result * 100) / 100;
+        console.log(`mapFromDeviceTemperature(${temperature}) => ${result}`)
+        return result;
     }
 
     static mapFromDeviceBrightness(brightness: number) : number {
         var relative = brightness - 3
         var percentage = relative / (100 - 3);
-        return Math.min(0, Math.max(1, percentage));
+        var result = Math.min(1, Math.max(0, percentage));
+        result = Math.round(result * 100) / 100;
+        console.log(`mapFromDeviceBrightness(${brightness}) => ${result}`)
+        return result;
     }
 
     static mapToDeviceBrightness(percentage: number) : number {
@@ -178,6 +232,17 @@ export class ElgatoKeyLightClient {
         let clampedValue = Math.min(100, Math.max(3, absolute));
         return Math.round(clampedValue);
     }
+}
+
+export enum ElgatoPowerOnBehavior {
+    RestoreLastUsedSettings,
+    RestoreDefaults
+}
+
+export interface ElgatoLightSettings {
+    powerOnBehavior: ElgatoPowerOnBehavior,
+    powerOnBrightness: number,
+    powerOnTemperature: number,
 }
 
 export interface ElgatoKeyLightState {
